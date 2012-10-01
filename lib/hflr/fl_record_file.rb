@@ -1,32 +1,32 @@
 #require File.expand_path(File.dirname(__FILE__) + '/record_template')
 
 
-class FLRFile  
+class FLRFile
 
   include Enumerable
-  
+
   attr_reader :line_number, :record_template
-  
+
   def initialize(source, record_types, record_layouts, logical_first_column=0, extra_columns = nil)
     # Allow record layouts like 
     # {:type1=>[:var1=>1..5,:var2=>7..8],:type2=>[:var1=>1..1,:var2=>3..4]}
     if record_layouts.values.first.is_a? Hash
       record_layouts = create_layouts(record_layouts)
-    end    
+    end
     @line_number = 0
-    @file = source    
+    @file = source
     @record_type_labels=record_types
     @record_type_symbols = record_types.is_a?(Hash) ? record_types.invert : :none
     if extra_columns  then
-      @record_template = HFLR::RecordTemplate.create(record_layouts, @record_type_symbols, logical_first_column, extra_columns)   
+      @record_template = HFLR::RecordTemplate.create(record_layouts, @record_type_symbols, logical_first_column, extra_columns)
     else
-        @record_template = HFLR::RecordTemplate.create(record_layouts, @record_type_symbols, logical_first_column)   
-    end        
+        @record_template = HFLR::RecordTemplate.create(record_layouts, @record_type_symbols, logical_first_column)
+    end
   end
-  
+
   def set_fast
-  @fast = !@record_type_labels.is_a?(Hash)                    
-  unless @fast    
+  @fast = !@record_type_labels.is_a?(Hash)
+  unless @fast
   raise "Cannot set fast mode with more than one record type."
   end
       if @fast
@@ -35,32 +35,32 @@ class FLRFile
 
        records_to_take =  100000000 / @width
 
-       @buffer_size = @width * records_to_take       
-       
+       @buffer_size = @width * records_to_take
+
 
        @position=0
        @current_buffer=nil
-      end        
+      end
   end
-  
+
   def ranges=(ranges)
-    @fast or raise "Cannot read selected ranges because input file has multiple record types #{@record_type_labels.to_s}"               
-    unless ranges.first.is_a?(Range) 
+    @fast or raise "Cannot read selected ranges because input file has multiple record types #{@record_type_labels.to_s}"
+    unless ranges.first.is_a?(Range)
      raise "You specified a #{ranges.first.class.to_s} instead of a range in the list of ranges.  Use (a..b) to specify a range."
      end
-     
+
       @offsets =offsets_to_read(ranges, @width)
 
       @ranges = ranges
   end
 
-  
+
   def in_range?(line_number)
     @ranges ? !!(@ranges.detect{|r| r.member?(line_number)}) : true
   end
 
 def finished?
-  if @fast 
+  if @fast
   @offsets.empty? && @current_buffer.nil?
   else
     @file.eof?
@@ -73,20 +73,20 @@ end
 
 # If multiple record types,  extract it from the string, otherwise just return the type of this file
 def get_record_type(line)
-  return nil if line.nil?  
+  return nil if line.nil?
   return nil if line.strip.empty?
-  @record_type_labels.is_a?(Hash) ? @record_type_labels[line[0..0]] : @record_type_labels       
+  @record_type_labels.is_a?(Hash) ? @record_type_labels[line[0..0]] : @record_type_labels
 end
 
-def  build_record(line)    
-  return nil if line.nil?        
+def  build_record(line)
+  return nil if line.nil?
   record_type = line_type(line)
   raise "Unknown record type at line #{@line_number.to_s}" if record_type == :unknown
-  return @record_template[record_type].build_record(line.chomp)                 
+  return @record_template[record_type].build_record(line.chomp)
 end
 
-def next_record  
-  build_record(get_next_known_line_type) 
+def next_record
+  build_record(get_next_known_line_type)
 end
 
 def line_type(line)
@@ -94,49 +94,49 @@ def line_type(line)
   return record_type ? record_type : :unknown
 end
 
-def get_next_known_line_type  
-  @fast ? fast_get_next_known_line_type   : sequential_get_next_known_line_type  
+def get_next_known_line_type
+  @fast ? fast_get_next_known_line_type   : sequential_get_next_known_line_type
 end
 
-def fast_get_next_known_line_type  
+def fast_get_next_known_line_type
   unless @current_buffer.nil? && (@offsets.nil? ||  @offsets.empty?)
     if @current_buffer.nil?
       chunk = @offsets.shift
 
-      
+
     @file.pos =  chunk.pos
-    @current_buffer=@file.read(chunk.width)        
+    @current_buffer=@file.read(chunk.width)
 
           record= @current_buffer.slice(@position,@width)
 
 
-          @position += @width         
+          @position += @width
 
           if @position >= @current_buffer.size
 
-                    @current_buffer = nil 
+                    @current_buffer = nil
                     @position=0
-                    end                             
+                    end
           return record
     else
-      record= @current_buffer.slice(@position,@width)     
+      record= @current_buffer.slice(@position,@width)
 
       @position += @width
       if @position>=@current_buffer.size
         @position=0
         @current_buffer=nil
       end
-      return record           
+      return record
     end
-    
-  else    
+
+  else
 
     nil
   end
 end
 
-def sequential_get_next_known_line_type  
-  line = @file.gets 
+def sequential_get_next_known_line_type
+  line = @file.gets
   @line_number+=1
   record_type = line_type(line)
   while !finished? && (!in_range?(@line_number) || record_type == :unknown)
@@ -144,7 +144,7 @@ def sequential_get_next_known_line_type
     @line_number+=1
     record_type = line_type(line)
   end
-  record_type == :unknown ? nil : line   
+  record_type == :unknown ? nil : line
 end
 
 
@@ -154,36 +154,37 @@ def each
   if @fast
     yield(next_record) until finished?
   else
-  @file.each_line do |line|        
+  @file.each_line do |line|
     unless line_type(line) == :unknown        || !in_range?(@line_number)
       data = build_record(line)
-      yield data 
+      yield data
     end
-  end 
+  end
 end
 end
 
- # This will take a Hash or Struct orArray;  if an Array the record type must be the last element when 
+ # This will take a Hash or Struct orArray;  if an Array the record type must be the last element when
  # the record layout  has more than one record type.
-  def <<(record)         
+  def <<(record)
     if record.is_a? Array
-    record_type = @record_type_symbols == :none ? @record_template.keys.first : record.last     
-      @file.puts @record_template[record_type].build_line(record)
+      record_type = @record_type_symbols == :none ? @record_template.keys.first : record.last
+      line =  @record_template[record_type].build_line(record)
     else
-      record_type = @record_type_symbols == :none ?@record_template.keys.first : record[:record_type]
-      if @record_template[record[:record_type]] == nil then
-        raise "Record type problem in output: #{record[:record_type].to_s} type on record, #{@record_template.keys.join(",")} types of templates"
-      end
-      
-      @file.puts @record_template[record_type].build_line(record)      
+      ArgumentError.new("record should be an Array")
     end
+    if @cr_before_line
+      line = "\n" + line
+    else
+      @cr_before_line = true
+    end
+    @file.write(line)
   end
 
 # Use when creating a new HFLR file
-def self.open(path, mode, record_types, record_layouts, logical_first_column=0)  
+def self.open(path, mode, record_types, record_layouts, logical_first_column=0)
   file = File.open(path, mode)
   begin
-    hflr_file = new(file, record_types, record_layouts, logical_first_column) 
+    hflr_file = new(file, record_types, record_layouts, logical_first_column)
     yield hflr_file
   ensure
     file.close
@@ -199,22 +200,22 @@ def offsets_to_read(ranges, width)
   ranges.each do |range|
     offsets = range.map{|offset| offset}
     taken = []
-    
+
     while !offsets.empty?
       taken << offsets.shift
       if taken.size * width == @buffer_size  || offsets.empty?
-      
+
         chunks << chunk.new(taken.first * @width, taken.size * width)
-        taken = []       
+        taken = []
       end # if
-    end # while              
+    end # while
   end # each
-  
-  chunks   
+
+  chunks
 end
 
-def get_record_width_from_file  
-  width = @file.gets.size 
+def get_record_width_from_file
+  width = @file.gets.size
   @file.rewind
   width
 end
@@ -225,15 +226,15 @@ def create_layouts(layout)
   var_class = Struct.new(:name,:start,:len)
 new_layout = {}
   layout.each_pair do |record_type,vars|
-  
+
     new_layout[record_type] = []
-    new_vars = vars.each_pair do |var_name, range|   
-      new_layout[record_type] << var_class.new(var_name.to_s,range.first, range.last - range.first + 1)        
+    new_vars = vars.each_pair do |var_name, range|
+      new_layout[record_type] << var_class.new(var_name.to_s,range.first, range.last - range.first + 1)
     end
     new_layout[record_type].sort!{|a,b| a.start<=>b.start}
   end
   return new_layout
 end
- 
+
 end
 
