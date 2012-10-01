@@ -98,6 +98,16 @@ def get_next_known_line_type
   @fast ? fast_get_next_known_line_type   : sequential_get_next_known_line_type
 end
 
+def get_next_line
+  line = @file.gets
+  @line_number+=1
+  line
+end
+
+def next
+  build_record(get_next_line)
+end
+
 def fast_get_next_known_line_type
   unless @current_buffer.nil? && (@offsets.nil? ||  @offsets.empty?)
     if @current_buffer.nil?
