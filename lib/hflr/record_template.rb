@@ -24,12 +24,12 @@ def self.create(record_layouts, record_type_symbols, first_column_location, extr
   templates = {}
   self.check_record_layouts(record_layouts)
   
-  record_layouts.keys.each do |record_type|    
+  record_layouts.each_pair do |record_type, vars|    
     record_label = record_type_symbols == :none ? :none : record_type_symbols[record_type]
     templates[record_type] = 
     self.create_template_class(record_type,
       record_label,
-    record_layouts[record_type], 
+    vars, 
     first_column_location, 
     extra_columns[record_type]) 
   end
@@ -121,7 +121,15 @@ def self.create_template_class(record_type, record_type_label, layout, first_col
    if record.is_a?(Array) or record.is_a?(Struct) then
      fields = []    
      @field_widths.each_with_index do |width, i|  
+     begin
     fields << right_format(record[i], width)
+    rescue Exception=>msg
+    if  record.is_a?(Struct)
+      raise "Output format problem for #{record.members[i].to_s} #{msg.to_s}"
+      else
+            raise "Output format problem for column #{i.to_s} with value #{record[i].to_s} #{msg.to_s}"
+      end
+    end
    end
   return fields
  else

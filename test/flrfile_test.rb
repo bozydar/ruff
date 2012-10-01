@@ -23,14 +23,14 @@ class FLRFileTest < Test::Unit::TestCase
   
   
   def test_initialize
-  sample_data_path = File.dirname(__FILE__) 
-  fwf = FLRFile.new(
-        File.new("#{sample_data_path}/sample.dat"),
-        @record_types, # Record types to read from the file, all others will be ignored 
-        @layouts,# metadata for all record types
-        1, # column  0 starts at logical location 1 
-        {:household=>[:people],:person=>[:household_id,:pserial]} # extra columns by record type
-        )
+      sample_data_path = File.dirname(__FILE__) 
+      fwf = FLRFile.new(
+          File.new("#{sample_data_path}/sample.dat"),
+          @record_types, # Record types to read from the file, all others will be ignored 
+          @layouts,# metadata for all record types
+          1, # column  0 starts at logical location 1 
+          {:household=>[:people],:person=>[:household_id,:pserial]} # extra columns by record type
+          )
   
    # Extra columns + record_type accessors should have been created
      hh_struct = fwf.record_template[:household].record_structure.new
@@ -72,7 +72,7 @@ class FLRFileTest < Test::Unit::TestCase
   
   
   def test_build_record
-    sample_data_path = File.dirname(__FILE__) 
+      sample_data_path = File.dirname(__FILE__) 
       fwf = FLRFile.new(
       File.new("#{sample_data_path}/sample.dat"),
       @record_types, # Record types to read from the file, all others will be ignored 
@@ -90,7 +90,94 @@ class FLRFileTest < Test::Unit::TestCase
       end
            
   end
+
+def test_fast_next_record
+sample_data_path = File.dirname(__FILE__) 
+    
+  layout = {:customer=>{
+    :name=>1..25,
+    :zip=>26..30,
+    :balance=>31..35   
+  }
+  }
+
+customer_file = FLRFile.new(File.new(sample_data_path + "/customers.dat"), :customer, layout, 1)
+customer_file.set_fast
+customer_file.ranges=[(0..2)]
+
+records = []
+while !customer_file.finished?
+  record = customer_file.next_record 
   
+  puts record.inspect
+  records << record
+  end
+  
+assert_equal 3, records.size
+
+# Check that the records aren't off by one
+assert_equal "Jane Smith",records[1].name
+assert_equal "John Smith",records.last.name
+
+end
+
+def test_partial_fast_next_line
+sample_data_path = File.dirname(__FILE__) 
+    
+  layout = {:customer=>{
+    :name=>1..25,
+    :zip=>26..30,
+    :balance=>31..35   
+  }
+  }
+
+customer_file = FLRFile.new(File.new(sample_data_path + "/customers.dat"), :customer, layout, 1)
+customer_file.set_fast
+customer_file.ranges=[(0..1)]
+
+records = []
+while !customer_file.finished?
+  record = customer_file.next_record 
+  puts record.inspect
+  records << record
+  end
+  
+assert_equal 2, records.size
+
+# Check that the records aren't off by one
+assert_equal "Jane Smith",records[1].name
+
+end
+
+def test_fast_each
+sample_data_path = File.dirname(__FILE__) 
+    
+  layout = {:customer=>{
+    :name=>1..25,
+    :zip=>26..30,
+    :balance=>31..35   
+  }
+  }
+
+customer_file = FLRFile.new(File.new(sample_data_path + "/customers.dat"), :customer, layout, 1)
+customer_file.set_fast
+customer_file.ranges=[(0..1)]
+
+records = []
+customer_file.each do |record|
+  
+  puts record.inspect
+  records << record
+  end
+  
+assert_equal 2, records.size
+
+# Check that the records aren't off by one
+assert_equal "Jane Smith",records[1].name
+
+end
+
+
   
   def test_each
     sample_data_path = File.dirname(__FILE__) 
@@ -187,6 +274,14 @@ def test_line_type
   assert_equal :person,fwf.line_type("P123")
   assert_equal :unknown, fwf.line_type("C123")
 end
+
+def test_ranges
+end
+
+def test_in_range
+end
+
+
   
   def test_get_next_known_line_type
     sample_data_path = File.dirname(__FILE__) 
@@ -211,3 +306,5 @@ end
   end
   
 end
+
+

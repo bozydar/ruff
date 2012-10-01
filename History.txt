@@ -1,4 +1,14 @@
+== 1.0.1 / 2010-01-21
+
+* Fixed warnings 
+* Added better exception handling for badly formatted output data
+
+
 == 0.11.0 / 2009-08-04
 
 *  Removed useless files 
   * Corrected version number 
+
+== 1.0.1 / 2011-02-09
+   * Added ability to specify file format in Ruby with Range class (see example.rb in /test.)
+   

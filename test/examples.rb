@@ -46,5 +46,22 @@ customer_orders_file = FLRFile.new(
     show record
   end
   
+
+puts " ----- You can also use metadata in Ruby -----"
+# Use Ruby metadata
+
+layout = {:customer=>{
+  :name=>1..25,
+  :zip=>26..30,
+  :balance=>31..35
   
-  
+}
+}
+customer_file = FLRFile.new(File.new("customers.dat"), :customer, layout, 1, [:line_number])
+
+
+# You can read through the file and access the fields with methods named after the columns:
+customer_file.each do |record|
+  puts "Customer #{customer_file.line_number.to_s} #{record.name} #{record.zip} "
+end
+
