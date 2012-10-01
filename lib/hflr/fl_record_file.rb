@@ -79,7 +79,7 @@ class FLRFile
     return nil if line.nil?
     record_type = line_type(line)
     raise "Unknown record type at line #{@line_number.to_s}" if record_type == :unknown
-    return @record_template[record_type].build_record(line.chomp)
+    @record_template[record_type].build_record(line.chomp)
   end
 
   def next_record
@@ -88,7 +88,7 @@ class FLRFile
 
   def line_type(line)
     record_type = get_record_type(line)
-    return record_type ? record_type : :unknown
+    record_type ? record_type : :unknown
   end
 
   def get_next_known_line_type
@@ -106,7 +106,9 @@ class FLRFile
   end
 
   def fast_get_next_known_line_type
-    unless @current_buffer.nil? && (@offsets.nil? || @offsets.empty?)
+    if @current_buffer.nil? && (@offsets.nil? || @offsets.empty?)
+      nil
+    else
       if @current_buffer.nil?
         chunk = @offsets.shift
 
@@ -136,9 +138,6 @@ class FLRFile
         return record
       end
 
-    else
-
-      nil
     end
   end
 
@@ -170,14 +169,18 @@ class FLRFile
   end
 
   # This will take a Hash or Struct orArray;  if an Array the record type must be the last element when
-  # the record layout  has more than one record type.
+  # the record layout has more than one record type.
   def <<(record)
-    if record.is_a? Array
-      record_type = @record_type_symbols == :none ? @record_template.keys.first : record.last
-      line = @record_template[record_type].build_line(record)
-    else
-      ArgumentError.new("record should be an Array")
-    end
+    record_type =
+        if record.is_a? Array
+          @record_type_symbols == :none ? @record_template.keys.first : record.last
+        else
+          if @record_template[record[:record_type]] == nil then
+            raise "Record type problem in output: #{record[:record_type].to_s} type on record, #{@record_template.keys.join(",")} types of templates"
+          end
+          @record_type_symbols == :none ? @record_template.keys.first : record[:record_type]
+        end
+    line = @record_template[record_type].build_line(record)
     if @cr_before_line
       line = "\n" + line
     else
@@ -207,7 +210,7 @@ class FLRFile
       offsets = range.map { |offset| offset }
       taken = []
 
-      while !offsets.empty?
+      until offsets.empty?
         taken << offsets.shift
         if taken.size * width == @buffer_size || offsets.empty?
 
@@ -234,12 +237,12 @@ class FLRFile
     layout.each_pair do |record_type, vars|
 
       new_layout[record_type] = []
-      new_vars = vars.each_pair do |var_name, range|
+      vars.each_pair do |var_name, range|
         new_layout[record_type] << var_class.new(var_name.to_s, range.first, range.last - range.first + 1)
       end
       new_layout[record_type].sort! { |a, b| a.start<=>b.start }
     end
-    return new_layout
+    new_layout
   end
 
 end
