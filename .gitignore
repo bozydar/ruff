@@ -1,0 +1,11 @@
+.idea
+.bundle
+.config
+.vantiv_config*
+coverage
+InstalledFiles
+.archive
+
+
+# YARD artifacts
+temp/
