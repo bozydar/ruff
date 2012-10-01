@@ -1,8 +1,8 @@
 module HFLR
 
   class RecordTemplate
-    UnfilledChar = ' '
-    MissingOutput = "ZZZZZZZZZZZZZZZZZZZZZ"
+    UNFILLED_CHAR = ' '
+    MISSING_OUTPUT = "ZZZZZZZZZZZZZZZZZZZZZ"
 
     attr_reader :record_structure, :field_pattern, :record_type, :record_type_label
     attr_accessor :strip_whitespace
@@ -67,13 +67,13 @@ module HFLR
       rescue Exception => msg
         raise "On record type #{self.record_type} problem with structure " + msg.to_s
       end
-      return data
+      data
     end
 
     def build_line(record)
       line = format_fields(record).pack(@field_pattern)
-      line.tr!("\0", UnfilledChar)
-      return line
+      line.tr!("\0", UNFILLED_CHAR)
+      line
     end
 
     private
@@ -116,7 +116,7 @@ module HFLR
 
 
     def format_fields(record)
-      if record.is_a?(Array) or record.is_a?(Struct) then
+      if record.is_a?(Array) or record.is_a?(Struct)
         fields = []
         @field_widths.each_with_index do |width, i|
           begin
@@ -129,21 +129,20 @@ module HFLR
             end
           end
         end
-        return fields
+        fields
       else
         raise "Record to format must be a Struct or Array"
       end
     end
 
     def right_format(data, len)
-      data_str = ""
       if data.is_a? String
         data_str = data.ljust(len)
       elsif data.is_a? Symbol
         data_str = data.to_s.ljust(len)
       else
         data_str = sprintf("%0#{len.to_s}d", data)
-        data_str = MissingOutput[0..len-1] if data == -999998
+        data_str = MISSING_OUTPUT[0..len-1] if data == -999998
       end
       raise "Data too large for allocated columns #{data_str}" if data_str.size > len
       data_str
