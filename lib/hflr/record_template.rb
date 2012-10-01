@@ -72,7 +72,6 @@ module HFLR
 
     def build_line(record)
       line = format_fields(record).pack(@field_pattern)
-      line[0] = @record_type_label unless @record_type_label == :none
       line.tr!("\0", UnfilledChar)
       return line
     end

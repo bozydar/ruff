@@ -12,8 +12,8 @@ class FLRFile
     end
     @line_number = 0
     @file = source
-    @record_type_labels=record_types
-    @record_type_symbols = record_types.is_a?(Hash) ? record_types.invert : :none
+    @record_type_labels = record_types
+    @record_type_symbols = record_types.is_a?(Hash) ? record_types : :none
     if extra_columns then
       @record_template = HFLR::RecordTemplate.create(record_layouts, @record_type_symbols, logical_first_column, extra_columns)
     else
@@ -72,7 +72,20 @@ class FLRFile
   def get_record_type(line)
     return nil if line.nil?
     return nil if line.strip.empty?
-    @record_type_labels.is_a?(Hash) ? @record_type_labels[line[0..0]] : @record_type_labels
+    if @record_type_labels.is_a?(Hash)
+      matching_pair = @record_type_labels.find do |_, value|
+        discriminator = value[:discriminator]
+        position = value[:position]
+        line[position..-1].start_with?(discriminator)
+      end
+      if matching_pair
+        matching_pair[0]
+      else
+        nil
+      end
+    else
+      @record_type_labels
+    end
   end
 
   def build_record(line)
