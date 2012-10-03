@@ -1,3 +1,5 @@
+require 'test_hflr'
+
 class FLRFileTest < Test::Unit::TestCase
 
   def setup
@@ -98,7 +100,7 @@ class FLRFileTest < Test::Unit::TestCase
     customer_file.ranges=[(0..2)]
 
     records = []
-    while !customer_file.finished?
+    until customer_file.finished?
       record = customer_file.next_record
 
       puts record.inspect
@@ -128,7 +130,7 @@ class FLRFileTest < Test::Unit::TestCase
     customer_file.ranges=[(0..1)]
 
     records = []
-    while !customer_file.finished?
+    until customer_file.finished?
       record = customer_file.next_record
       puts record.inspect
       records << record
@@ -201,7 +203,7 @@ class FLRFileTest < Test::Unit::TestCase
         {:household => [:people], :person => [:household_id, :pserial]}) # Extra columns not to come from metadata
 
     records = []
-    while rec = fwf.next_record do
+    while (rec = fwf.next_record) do
       records << rec
 
     end
@@ -284,11 +286,11 @@ class FLRFileTest < Test::Unit::TestCase
     )
     # By reading the sample_activities file with only the household and person record types know
     # we should get the activity and who records to be skipped.
-    while rec=fwf.get_next_known_line_type
+    while (rec=fwf.get_next_known_line_type)
 
       unless rec.strip.empty?
 
-        assert ["P", "H"].include?(rec[0..0])
+        assert %w(P H).include?(rec[0..0])
 
       end
     end

@@ -1,3 +1,5 @@
+require 'test_hflr'
+
 class RecordTemplateTest < Test::Unit::TestCase
 
   Var = Struct.new(:name, :start, :len)
