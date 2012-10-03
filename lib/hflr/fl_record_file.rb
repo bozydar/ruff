@@ -75,7 +75,7 @@ class FLRFile
     if @record_type_labels.is_a?(Hash)
       matching_pair = @record_type_labels.find do |_, value|
         discriminator = value[:discriminator]
-        position = value[:position]
+        position = value[:position] - 1
         line[position..-1].start_with?(discriminator)
       end
       if matching_pair

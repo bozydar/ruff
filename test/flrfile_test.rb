@@ -12,7 +12,7 @@ class FLRFileTest < Test::Unit::TestCase
          :person => [var_type.new(:rectypep, 1, 1), var_type.new("age", 2, 3), var_type.new("sex", 5, 1), var_type.new("marst", 6, 1)]}
 
     # Give the values used in the data for each record type  
-    @record_types = {:household => {:discriminator => 'H', :position => 0}, :person => {:discriminator => 'P', :position => 0}}
+    @record_types = {:household => {:discriminator => 'H', :position => 1}, :person => {:discriminator => 'P', :position => 1}}
   end
 
   def teardown
