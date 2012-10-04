@@ -53,7 +53,7 @@ module HFLR
     end
 
     def self.get_pattern(layout, first_column_location=0)
-      layout.map { |l| '@' + (l.start - first_column_location).to_s + 'A' + l.len.to_s }.to_s
+      layout.map { |l| '@' + (l.start - first_column_location).to_s + 'a' + l.len.to_s }.to_s
     end
 
     public

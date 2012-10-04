@@ -110,8 +110,8 @@ class FLRFileTest < Test::Unit::TestCase
     assert_equal 3, records.size
 
 # Check that the records aren't off by one
-    assert_equal "Jane Smith", records[1].name
-    assert_equal "John Smith", records.last.name
+    assert_equal "Jane Smith", records[1].name.strip
+    assert_equal "John Smith", records.last.name.strip
 
   end
 
@@ -139,7 +139,7 @@ class FLRFileTest < Test::Unit::TestCase
     assert_equal 2, records.size
 
 # Check that the records aren't off by one
-    assert_equal "Jane Smith", records[1].name
+    assert_equal "Jane Smith", records[1].name.strip
 
   end
 
@@ -167,7 +167,7 @@ class FLRFileTest < Test::Unit::TestCase
     assert_equal 2, records.size
 
 # Check that the records aren't off by one
-    assert_equal "Jane Smith", records[1].name
+    assert_equal "Jane Smith               ", records[1].name
 
   end
 
